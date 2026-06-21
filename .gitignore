@@ -9,10 +9,11 @@ dist/
 .env
 *.json.bak
 
-# Runtime secrets in data/ (credentials, token cache)
-./google-sa.json
-./synapse-token.json
-./helios.account.json
+# Runtime secrets
+/google-sa.json
+/synapse-token.json
+/helios.account.json
+/data/
 
 # Logs
 *.log

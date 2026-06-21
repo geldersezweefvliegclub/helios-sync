@@ -1,0 +1,6 @@
+{
+  "url": "https://your-helios-host.example.com/",
+  "username": "helios-user",
+  "password": "helios-password",
+  "token": "optional-bypass-token"
+}

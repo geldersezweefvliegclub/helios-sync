@@ -1,0 +1,36 @@
+{
+  "name": "helios-sync",
+  "version": "1.0.0",
+  "description": "MQTT-driven sync service: Helios → Matrix Synapse",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "start:dev": "ts-node-dev --respawn --transpile-only src/main.ts"
+  },
+  "dependencies": {
+    "@datalust/winston-seq": "^2.0.0",
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^3.2.3",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/event-emitter": "^2.0.4",
+    "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/schedule": "^6.1.3",
+    "cron": "^4.4.0",
+    "dotenv": "^16.4.5",
+    "google-auth-library": "^9.15.1",
+    "googleapis": "^140.0.0",
+    "joi": "^17.12.3",
+    "mqtt": "^5.10.1",
+    "nest-winston": "^1.10.2",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  }
+}

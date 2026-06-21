@@ -1,0 +1,48 @@
+{
+  "kamers": {
+    "algemeen": [
+      "GeZC",
+      "Babbelboxx",
+      "Nieuwsbrieven",
+      "Vliegdagen",
+      "Winterwerk",
+      "Foto's van vliegdagen",
+      "Informatie over (extra) vliegdagen en kampen",
+      "Vragen & antwoorden chat",
+      "Bestuurs NOTAM's",
+      "Instructie NOTAM's",
+      "ICT NOTAM's",
+      "Veiligheid NOTAM's"
+    ],
+    "Instructeur": ["Instructeurs", "Ruilen diensten instructeurs"],
+    "Lierist": ["Lieristen", "Ruilen diensten lieristen"],
+    "Startleider": ["Startleiders", "Ruilen diensten startleiders"],
+    "DDWV": ["DDWV Crew", "Ruilen diensten DDWV"],
+    "CIMT": ["CI-MT"],
+    "LIO": ["Lieristen", "Ruilen diensten LIO's"],
+    "Sleepvlieger": [],
+    "Gastenvlieger": [],
+    "Technicus": [],
+    "Rapporteur": [],
+    "Rooster": [
+      "Lieristen",
+      "Ruilen diensten lieristen",
+      "Ruilen diensten LIO's",
+      "Startleiders",
+      "Ruilen diensten startleiders"
+    ],
+    "Starttoren": [],
+    "Beheerder": []
+  },
+  "favorieten": [
+    "GeZC",
+    "Babbelbox",
+    "Nieuwsbrieven",
+    "Vliegdagen",
+    "Vragen & antwoorden chat",
+    "Bestuurs NOTAM's",
+    "Instructie NOTAM's",
+    "ICT NOTAM's",
+    "Veiligheid NOTAM's"
+  ]
+}

@@ -1,0 +1,17 @@
+services:
+  helios-sync:
+    build: .
+    image: helios-sync:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Room / kamer configuration (non-sensitive, version-controlled)
+      - ./synapse-rooms.json:/usr/src/app/synapse-rooms.json:ro
+      # Runtime secrets: Google service account + Synapse token cache
+      - ./data/google-sa.json:/data/google-sa.json:ro
+      - ./data/synapse-token.json:/data/synapse-token.json
+    environment:
+      SYNAPSE_ROOMS_CONFIG: /usr/src/app/synapse-rooms.json
+      SYNAPSE_TOKEN_FILE: /data/synapse-token.json
+      GOOGLE_CREDENTIALS_PATH: /data/google-sa.json
