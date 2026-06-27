@@ -48,7 +48,11 @@ export class EboekhoudenWorker {
     }
 
     try {
-      await this.syncLid(lid);
+      if (lid.VERWIJDERD) {
+        await this.deleteLid(lid);
+      } else {
+        await this.syncLid(lid);
+      }
     } catch (err) {
       this.logger.error(`eBoekhouden sync mislukt voor ${lid.NAAM} (LIDNR=${lid.LIDNR}): ${err}`);
       await this.errorMail.sendSyncError(
@@ -70,22 +74,30 @@ export class EboekhoudenWorker {
     let leden: HeliosLidExtended[];
     try {
       await this.loginService.login();
-      leden = (await this.ledenService.getLeden()) as HeliosLidExtended[];
+      const actief = (await this.ledenService.getLeden(false)) as HeliosLidExtended[];
+      const verwijderd = (await this.ledenService.getLeden(true)) as HeliosLidExtended[];
+
+      leden = actief.concat(verwijderd);
     } catch (err) {
       this.logger.error(`Ophalen Helios leden mislukt: ${err}`);
       await this.errorMail.sendSyncError('eBoekhouden bulk sync: ophalen Helios leden mislukt', err);
       return;
     }
 
-    const teSync = leden.filter((l) => !!l.LIDNR);
-    this.logger.verbose(`${leden.length} leden opgehaald, ${teSync.length} met LIDNR`);
+    const toSync = leden.filter((l) => !!l.LIDNR);
+    this.logger.verbose(`${leden.length} leden opgehaald, ${toSync.length} met LIDNR`);
 
     let ok = 0;
     let failed = 0;
 
-    for (const lid of teSync) {
+    for (const lid of toSync) {
       try {
-        await this.syncLid(lid);
+        if (lid.VERWIJDERD) {
+          await this.deleteLid(lid)
+        } else {
+          await this.syncLid(lid);
+        }
+
         ok++;
       } catch (err) {
         failed++;
@@ -121,6 +133,25 @@ export class EboekhoudenWorker {
       this.logger.log(`Aanmaken eBoekhouden lid ${lid.LIDNR} (${lid.NAAM})`);
       await this.api.createMember(body);
     }
+  }
+
+  private async deleteLid(lid: HeliosLidExtended): Promise<void> {
+    const existing = await this.api.findMemberByNumber(lid.LIDNR!);
+
+    if (!existing) {
+      this.logger.debug(`Lid ${lid.LIDNR} (${lid.NAAM}) niet gevonden in eBoekhouden, overslaan`);
+      return;
+    }
+
+    const deletedName = `ZZ ${lid.NAAM} (verwijderd)`;
+
+    if (existing.name === deletedName) {
+      this.logger.debug(`Lid ${lid.LIDNR} al gemarkeerd als verwijderd`);
+      return;
+    }
+
+    this.logger.log(`Markeer eBoekhouden lid ${lid.LIDNR} (${lid.NAAM}) als verwijderd`);
+    await this.api.updateMember(existing.id, { name: deletedName });
   }
 
   private buildMemberBody(lid: HeliosLidExtended): EbMemberBody {

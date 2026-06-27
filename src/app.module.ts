@@ -47,6 +47,7 @@ import { EboekhoudenModule } from './e-boekhouden/eboekhouden.module';
 
         // Cron schedules
         CRON_EB_BULKSYNC: Joi.string().optional(),
+        CRON_SYNAPSE_BULKSYNC: Joi.string().optional(),
         CRON_TIMEZONE: Joi.string().optional(),
 
         // Logging

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OnEvent } from '@nestjs/event-emitter';
+import { Cron } from '@nestjs/schedule';
 import { randomBytes } from 'node:crypto';
 import { SynapseApiService } from './synapse-api.service';
 import { SynapseAuthService } from './synapse-auth.service';
@@ -8,8 +9,13 @@ import { SynapseRoomsService } from './synapse-rooms.service';
 import { SynapseUser } from './synapse.types';
 import { ErrorMailService } from '../common/error-mail.service';
 import { LidRecord } from '../helios/helios.leden';
+import { LoginService } from '../helios/apiservice/login.service';
+import { LedenService } from '../helios/apiservice/leden.service';
 import { SYNC_LIDTYPES } from './synapse.lidtypes';
 import { MQTT_SYNC, SyncMqttEvent } from '../mqtt/mqtt.events';
+
+const CRON_EXPRESSION = process.env.CRON_SYNAPSE_BULKSYNC || '5 3 * * *';
+const CRON_TIMEZONE   = process.env.CRON_TIMEZONE || 'Europe/Amsterdam';
 
 // Role flag → rooms config key mapping (matches synapse-rooms.json)
 const MAPPING_ROL_NAAR_KAMER: Record<string, string> = {
@@ -39,7 +45,11 @@ export class SynapseWorker {
     private readonly roomsService: SynapseRoomsService,
     private readonly configService: ConfigService,
     private readonly errorMailService: ErrorMailService,
-  ) {}
+    private readonly loginService: LoginService,
+    private readonly ledenService: LedenService,
+  ) {
+    this.logger.log(`${SynapseWorker.name}: Cron expressie: ${CRON_EXPRESSION} (${CRON_TIMEZONE})`);
+  }
 
   // ---------------------------------------------------------------------------
   // Event handler
@@ -61,6 +71,49 @@ export class SynapseWorker {
   }
 
   // ---------------------------------------------------------------------------
+  // Scheduled bulk sync
+  // ---------------------------------------------------------------------------
+
+  @Cron(CRON_EXPRESSION, { timeZone: CRON_TIMEZONE })
+  async runBulkSync(): Promise<void> {
+    this.logger.log('Start Synapse bulk sync van alle Helios leden');
+
+    let leden: LidRecord[];
+    try {
+      await this.loginService.login();
+      const actief    = await this.ledenService.getLeden(false);
+      const verwijderd = await this.ledenService.getLeden(true);
+      leden = actief.concat(verwijderd);
+    } catch (err) {
+      this.logger.error(`Ophalen Helios leden mislukt: ${err}`);
+      await this.errorMailService.sendSyncError('Synapse bulk sync: ophalen Helios leden mislukt', err);
+      return;
+    }
+
+    const toSync = leden.filter((l) => !!l.INLOGNAAM);
+    this.logger.verbose(`${leden.length} leden opgehaald, ${toSync.length} met INLOGNAAM`);
+
+    let ok = 0;
+    let failed = 0;
+
+    for (const lid of toSync) {
+      try {
+        await this.syncLid(lid);
+        ok++;
+      } catch (err) {
+        failed++;
+        this.logger.error(`Bulk sync mislukt voor ${lid.NAAM} (${lid.INLOGNAAM}): ${err}`);
+        await this.errorMailService.sendSyncError(
+          `Synapse bulk sync mislukt voor ${lid.NAAM} (${lid.INLOGNAAM})`,
+          err,
+        );
+      }
+    }
+
+    this.logger.log(`Synapse bulk sync gereed: ${ok} ok, ${failed} mislukt`);
+  }
+
+  // ---------------------------------------------------------------------------
   // Sync logic
   // ---------------------------------------------------------------------------
 
@@ -78,7 +131,7 @@ export class SynapseWorker {
 
     if (SYNC_LIDTYPES.includes(lid.LIDTYPE_ID)) {
       const password = lid.INGEVOERD_WACHTWOORD ?? null;
-      this.logger.log(`Sync lid ${lid.NAAM} (LIDTYPE_ID=${lid.LIDTYPE_ID}) password=${password ? 'yes' : 'no'}`);
+      this.logger.verbose(`Sync lid ${lid.NAAM} (LIDTYPE_ID=${lid.LIDTYPE_ID}) password=${password ? 'yes' : 'no'}`);
 
       await this.updateGebruiker(lid, password);
       await this.toevoegenAanKamers(lid);

@@ -6,8 +6,8 @@ import { LidRecord } from '../helios.leden';
 export class LedenService {
   constructor(private readonly api: ApiService) {}
 
-  async getLeden(): Promise<LidRecord[]> {
-    const data = await this.api.get<{ dataset: LidRecord[] }>('Leden', { max: '9999' });
+  async getLeden(verwijderd: boolean = false): Promise<LidRecord[]> {
+    const data = await this.api.get<{ dataset: LidRecord[] }>('Leden/GetObjects', { MAX: '9999', VERWIJDERD: verwijderd ? "true" : "false" });
     return data.dataset ?? [];
   }
 }
