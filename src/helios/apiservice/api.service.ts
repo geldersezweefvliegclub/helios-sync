@@ -56,6 +56,18 @@ export class ApiService {
     return response;
   }
 
+  async put(path: string, body: unknown): Promise<Response> {
+    const response = await fetch(this.baseUrl + path, {
+      method: 'PUT',
+      headers: this.headers(),
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      throw new Error(`Helios PUT ${path} mislukt: ${response.status}`);
+    }
+    return response;
+  }
+
   private headers(): Record<string, string> {
     const h: Record<string, string> = { 'Content-Type': 'application/json' };
     if (this.bearerToken) h['Authorization'] = `Bearer ${this.bearerToken}`;

@@ -7,6 +7,7 @@ import { GoogleModule } from './google/google.module';
 import { MqttModule } from './mqtt/mqtt.module';
 import { SynapseModule } from './synapse/synapse.module';
 import { EboekhoudenModule } from './e-boekhouden/eboekhouden.module';
+import { GlidernetModule } from './glidernet/glidernet.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { EboekhoudenModule } from './e-boekhouden/eboekhouden.module';
         // Cron schedules
         CRON_EB_BULKSYNC: Joi.string().optional(),
         CRON_SYNAPSE_BULKSYNC: Joi.string().optional(),
+        CRON_GLIDERNET_BULKSYNC: Joi.string().optional(),
         CRON_TIMEZONE: Joi.string().optional(),
 
         // Logging
@@ -60,6 +62,7 @@ import { EboekhoudenModule } from './e-boekhouden/eboekhouden.module';
     SynapseModule,
     MqttModule,
     EboekhoudenModule,
+    GlidernetModule,
   ],
 })
 export class AppModule {}
