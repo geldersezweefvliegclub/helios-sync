@@ -107,6 +107,7 @@ export class EboekhoudenWorker {
           err,
         );
       }
+      await new Promise((resolve) => setTimeout(resolve, 5000));
     }
 
     this.logger.log(`eBoekhouden bulk sync gereed: ${ok} ok, ${failed} mislukt`);

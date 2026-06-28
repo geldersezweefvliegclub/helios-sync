@@ -107,7 +107,7 @@ export class MqttService implements OnApplicationBootstrap, OnApplicationShutdow
     }
 
     const lid = JSON.parse(raw.data) as LidRecord;
-    this.logger.verbose(`MQTT sync: ${lid.NAAM} (ID=${lid.ID})`);
+    this.logger.log(`MQTT sync: ${lid.NAAM} (ID=${lid.ID})`);
     this.eventEmitter.emit(MQTT_SYNC, lid);
   }
 }

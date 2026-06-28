@@ -108,6 +108,7 @@ export class SynapseWorker {
           err,
         );
       }
+      await new Promise((resolve) => setTimeout(resolve, 5000));
     }
 
     this.logger.log(`Synapse bulk sync gereed: ${ok} ok, ${failed} mislukt`);
@@ -164,7 +165,7 @@ export class SynapseWorker {
     let avatarUrl: string | null = null;
 
     if (!gebruikerBestaat) {
-      this.logger.debug(`Gebruiker ${matrixId} bestaat niet, aanmaken`);
+      this.logger.log(`Gebruiker ${matrixId} bestaat niet, aanmaken`);
       avatarUrl = lid.AVATAR ? await this.uploadAvatar(lid) : null;
       updateNeeded = true;
     } else {
@@ -261,7 +262,7 @@ export class SynapseWorker {
     }
 
     await this.roomsService.ensureRoomMapping();
-    this.logger.log(`toevoegenAanKamers: ${matrixUserId}`);
+    this.logger.verbose(`toevoegenAanKamers: ${matrixUserId}`);
 
     // Toevoegen aan algemene kamers
     await this.roomsService.addUserToRooms(roomsConfig.kamers['algemeen'] ?? [], matrixUserId);
@@ -297,7 +298,7 @@ export class SynapseWorker {
     }
 
     await this.roomsService.ensureRoomMapping();
-    this.logger.log(`markeer als favoriet: ${matrixUserId}`);
+    this.logger.verbose(`markeer als favoriet: ${matrixUserId}`);
 
     const userToken = await this.authService.getUserToken(username, password);
     await this.roomsService.markRoomsAsFavorite(roomsConfig.favorieten, matrixUserId, userToken);

@@ -78,6 +78,17 @@ export class SynapseApiService {
         }
         throw new Error(`Synapse API 401 on ${method} ${url}: ${text}`);
       }
+
+      if (response.status === 404)
+      {
+        const text = await response.text();
+        let parsed: any;
+        try { parsed = JSON.parse(text); } catch { parsed = {}; }
+        if (parsed.errcode === 'M_NOT_FOUND') {
+          return undefined;
+        }
+      }
+
       await this.handleErrorResponse(response, url);
     }
 
