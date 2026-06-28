@@ -77,7 +77,8 @@ export class EboekhoudenWorker {
       const actief = (await this.ledenService.getLeden(false)) as HeliosLidExtended[];
       const verwijderd = (await this.ledenService.getLeden(true)) as HeliosLidExtended[];
 
-      leden = actief.concat(verwijderd);
+      const actiefLidnrs = new Set(actief.map((l) => l.LIDNR).filter(Boolean));     // lijst met LIDNRS
+      leden = actief.concat(verwijderd.filter((l) => !actiefLidnrs.has(l.LIDNR)));  // verwijderd mag alleen toegevoegd worden als LIDNR niet in actief voorkomt
     } catch (err) {
       this.logger.error(`Ophalen Helios leden mislukt: ${err}`);
       await this.errorMail.sendSyncError('eBoekhouden bulk sync: ophalen Helios leden mislukt', err);
