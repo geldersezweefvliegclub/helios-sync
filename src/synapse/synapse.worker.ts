@@ -156,8 +156,6 @@ export class SynapseWorker {
     const matrixId = `@${username}:${domain}`;
     const path = `_synapse/admin/v2/users/${encodeURIComponent(matrixId)}`;
 
-    this.logger.log(`updateGebruiker: ${matrixId}`);
-
     const existing = await this.getGebruiker(username);
     const gebruikerBestaat = existing !== null;
 
@@ -165,7 +163,6 @@ export class SynapseWorker {
     let avatarUrl: string | null = null;
 
     if (!gebruikerBestaat) {
-      this.logger.log(`Gebruiker ${matrixId} bestaat niet, aanmaken`);
       avatarUrl = lid.AVATAR ? await this.uploadAvatar(lid) : null;
       updateNeeded = true;
     } else {
@@ -185,7 +182,9 @@ export class SynapseWorker {
       }
     }
 
+    this.logger.debug(`updateGebruiker: ${matrixId} — bestaat=${gebruikerBestaat}, updateNeeded=${updateNeeded}, password=${password ? 'yes' : 'no'}`);
     if (!gebruikerBestaat || updateNeeded || password) {
+      this.logger.log(`updateGebruiker: ${matrixId}`);
       const data: Record<string, unknown> = {};
 
       if (!gebruikerBestaat || updateNeeded) {
@@ -221,9 +220,9 @@ export class SynapseWorker {
 
       this.logger.debug(`PUT ${path} — keys: ${Object.keys(data).join(', ')}`);
       await this.api.put<SynapseUser>(path, data);
-      this.logger.log(`update gebruiker gereed: ${matrixId}`);
+      this.logger.verbose(`update gebruiker gereed: ${matrixId}`);
     } else {
-      this.logger.log(`Geen update nodig voor ${matrixId}`);
+      this.logger.verbose(`Geen update nodig voor ${matrixId}`);
     }
   }
 
@@ -232,7 +231,7 @@ export class SynapseWorker {
     const username = lid.INLOGNAAM.toLowerCase();
     const matrixId = `@${username}:${domain}`;
 
-    this.logger.log(`verwijder gebruiker: ${matrixId}`);
+
 
     const existing = await this.getGebruiker(username);
     if (!existing) {
@@ -244,6 +243,8 @@ export class SynapseWorker {
       this.logger.debug(`User ${matrixId} is al gedeactiveerd, er is niets te doen`);
       return;
     }
+
+    this.logger.log(`verwijder gebruiker: ${matrixId}`);
 
     await this.api.post(`_synapse/admin/v1/deactivate/${encodeURIComponent(matrixId)}`, { erase: true });
     this.logger.log(`verwijderGebruiker gereed: ${matrixId}`);
