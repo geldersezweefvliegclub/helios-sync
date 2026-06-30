@@ -84,6 +84,10 @@ export class SynapseWorker {
       const actief    = await this.ledenService.getLeden(false);
       const verwijderd = await this.ledenService.getLeden(true);
       leden = actief.concat(verwijderd);
+
+      const actiefLidnrs = new Set(actief.map((l) => l.INLOGNAAM).filter(Boolean));     // lijst met inlognamen
+      leden = actief.concat(verwijderd.filter((l) => !actiefLidnrs.has(l.INLOGNAAM)));  // verwijderd mag alleen toegevoegd worden als INLOGNAAM niet in actief voorkomt
+
     } catch (err) {
       this.logger.error(`Ophalen Helios leden mislukt: ${err}`);
       await this.errorMailService.sendSyncError('Synapse bulk sync: ophalen Helios leden mislukt', err);
@@ -207,6 +211,10 @@ export class SynapseWorker {
         data.avatar_url = avatarUrl;
       }
 
+      if (!gebruikerBestaat && !password) {
+        data.password = randomBytes(10).toString('base64');
+        this.logger.debug(`Genereer tijdelijk wachtwoord voor aanmaken ${matrixId}`);
+      }
       // Re-activeren vereist een wachtwoord; genereer een tijdelijk wachtwoord indien nodig
       if (!lid.VERWIJDERD && gebruikerBestaat && existing!.deactivated && !data.password) {
         data.password = randomBytes(10).toString('base64');
@@ -311,7 +319,7 @@ export class SynapseWorker {
     const path = `_synapse/admin/v2/users/${encodeURIComponent(matrixId)}`;
 
     try {
-      return await this.api.get<SynapseUser>(path);
+      return (await this.api.get<SynapseUser>(path)) ?? null;
     } catch (err: any) {
       if (err?.message?.includes('404') || err?.message?.includes('M_NOT_FOUND')) {
         return null;
