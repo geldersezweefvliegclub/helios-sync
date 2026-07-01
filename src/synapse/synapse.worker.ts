@@ -128,9 +128,15 @@ export class SynapseWorker {
       return;
     }
 
+    const existing = await this.getGebruiker(lid.INLOGNAAM.toLowerCase());
+
     if (lid.VERWIJDERD) {
+      if (existing?.deactivated) {
+        this.logger.debug(`Lid ${lid.NAAM} is al gedeactiveerd in Synapse, overslaan`);
+        return;
+      }
       this.logger.log(`Lid ${lid.NAAM} is VERWIJDERD, deactivatie in Synapse`);
-      await this.verwijderGebruiker(lid);
+      await this.verwijderGebruiker(lid, existing);
       return;
     }
 
@@ -138,15 +144,19 @@ export class SynapseWorker {
       const password = lid.INGEVOERD_WACHTWOORD ?? null;
       this.logger.verbose(`Sync lid ${lid.NAAM} (LIDTYPE_ID=${lid.LIDTYPE_ID}) password=${password ? 'yes' : 'no'}`);
 
-      await this.updateGebruiker(lid, password);
+      await this.updateGebruiker(lid, password, existing);
       await this.toevoegenAanKamers(lid);
 
       if (password) {
         await this.markeerAlsFavoriet(lid, password);
       }
     } else {
+      if (existing?.deactivated) {
+        this.logger.debug(`Lid ${lid.NAAM} heeft LIDTYPE_ID=${lid.LIDTYPE_ID} maar is al gedeactiveerd in Synapse, overslaan`);
+        return;
+      }
       this.logger.log(`Lid ${lid.NAAM} heeft LIDTYPE_ID=${lid.LIDTYPE_ID}, deactivatie in Synapse`);
-      await this.verwijderGebruiker(lid);
+      await this.verwijderGebruiker(lid, existing);
     }
   }
 
@@ -154,13 +164,15 @@ export class SynapseWorker {
   // Synapse operations
   // ---------------------------------------------------------------------------
 
-  private async updateGebruiker(lid: LidRecord, password: string | null): Promise<void> {
+  private async updateGebruiker(lid: LidRecord, password: string | null, existing: SynapseUser | null = null): Promise<void> {
     const domain = this.configService.getOrThrow<string>('SYNAPSE_DOMAIN');
     const username = lid.INLOGNAAM.toLowerCase();
     const matrixId = `@${username}:${domain}`;
     const path = `_synapse/admin/v2/users/${encodeURIComponent(matrixId)}`;
 
-    const existing = await this.getGebruiker(username);
+    if (existing === null) {
+      existing = await this.getGebruiker(username);
+    }
     const gebruikerBestaat = existing !== null;
 
     let updateNeeded = false;
@@ -234,14 +246,15 @@ export class SynapseWorker {
     }
   }
 
-  private async verwijderGebruiker(lid: LidRecord): Promise<void> {
+  private async verwijderGebruiker(lid: LidRecord, existing: SynapseUser | null = null): Promise<void> {
     const domain = this.configService.getOrThrow<string>('SYNAPSE_DOMAIN');
     const username = lid.INLOGNAAM.toLowerCase();
     const matrixId = `@${username}:${domain}`;
 
+    if (existing === null) {
+      existing = await this.getGebruiker(username);
+    }
 
-
-    const existing = await this.getGebruiker(username);
     if (!existing) {
       this.logger.debug(`User ${matrixId} besaat niet in Synapse, er is niets te verwijderen`);
       return;
