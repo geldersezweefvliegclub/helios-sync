@@ -131,6 +131,11 @@ export class SynapseWorker {
     const existing = await this.getGebruiker(lid.INLOGNAAM.toLowerCase());
 
     if (lid.VERWIJDERD) {
+      if (existing == null) {
+        this.logger.debug(`Lid ${lid.NAAM} bestaat niet in Synapse, overslaan`);
+        return;
+      }
+
       if (existing?.deactivated) {
         this.logger.debug(`Lid ${lid.NAAM} is al gedeactiveerd in Synapse, overslaan`);
         return;
