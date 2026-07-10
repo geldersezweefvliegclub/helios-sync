@@ -132,7 +132,7 @@ export class SynapseWorker {
 
     if (lid.VERWIJDERD) {
       if (existing == null) {
-        this.logger.debug(`Lid ${lid.NAAM} bestaat niet in Synapse, overslaan`);
+        this.logger.debug(`Lid ${lid.NAAM} is verwijderd en bestaat niet in Synapse, overslaan`);
         return;
       }
 
@@ -156,6 +156,10 @@ export class SynapseWorker {
         await this.markeerAlsFavoriet(lid, password);
       }
     } else {
+      if (existing == null) {
+        this.logger.debug(`Lid ${lid.NAAM} heeft LIDTYPE_ID=${lid.LIDTYPE_ID} en bestaat niet in Synapse, overslaan`);
+        return;
+      }
       if (existing?.deactivated) {
         this.logger.debug(`Lid ${lid.NAAM} heeft LIDTYPE_ID=${lid.LIDTYPE_ID} maar is al gedeactiveerd in Synapse, overslaan`);
         return;
