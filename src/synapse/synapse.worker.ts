@@ -192,7 +192,7 @@ export class SynapseWorker {
       updateNeeded = true;
     } else {
       const currentEmail = existing!.threepids?.find((t) => t.medium === 'email')?.address ?? null;
-      if (currentEmail !== (lid.EMAIL ?? null)) {
+      if (currentEmail.toLowerCase() !== (lid.EMAIL.toLowerCase() ?? null)) {
         this.logger.debug(`Email aangepast: ${currentEmail} → ${lid.EMAIL}`);
         updateNeeded = true;
       } else if (existing!.admin !== lid.BEHEERDER) {
