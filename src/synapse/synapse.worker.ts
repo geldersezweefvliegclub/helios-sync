@@ -192,7 +192,10 @@ export class SynapseWorker {
       updateNeeded = true;
     } else {
       const currentEmail = existing!.threepids?.find((t) => t.medium === 'email')?.address ?? null;
-      if (currentEmail.toLowerCase() !== (lid.EMAIL.toLowerCase() ?? null)) {
+      if (currentEmail === null || currentEmail === '' || currentEmail === undefined) {
+        this.logger.debug(`Email ontbreekt → ${lid.EMAIL}`);
+        updateNeeded = true;
+      } else if (currentEmail.toLowerCase() !== (lid.EMAIL.toLowerCase() ?? null)) {
         this.logger.debug(`Email aangepast: ${currentEmail} → ${lid.EMAIL}`);
         updateNeeded = true;
       } else if (existing!.admin !== lid.BEHEERDER) {
