@@ -7,7 +7,7 @@ import { ErrorMailService } from '../common/error-mail.service';
 const CRON_EXPRESSION = process.env.CRON_GLIDERNET_BULKSYNC || '30 4 * * *';
 const CRON_TIMEZONE   = process.env.CRON_TIMEZONE || 'Europe/Amsterdam';
 
-const GLIDERNET_URL = 'http://ddb.glidernet.org/download';
+const GLIDERNET_URL = 'http://ddb.glidernet.org/download/';
 
 @Injectable()
 export class GlidernetWorker {
