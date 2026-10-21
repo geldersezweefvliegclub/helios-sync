@@ -59,6 +59,10 @@ export class SynapseWorker {
   async onSyncLid(lid: LidRecord): Promise<void> {
     this.logger.verbose(`Verwerken sync event voor lid ${lid.ID} (${lid.NAAM})`);
 
+    if (this.configService.get('SYNAPSE_URL') === undefined) {
+      this.logger.warn('SYNAPSE_URL is niet geconfigureerd, overslaan');
+      return;
+    }
     try {
       await this.syncLid(lid);
     } catch (err) {
@@ -77,6 +81,11 @@ export class SynapseWorker {
   @Cron(CRON_EXPRESSION, { timeZone: CRON_TIMEZONE })
   async runBulkSync(): Promise<void> {
     this.logger.log('Start Synapse bulk sync van alle Helios leden');
+
+    if (this.configService.get('SYNAPSE_URL') === undefined) {
+      this.logger.warn('SYNAPSE_URL is niet geconfigureerd, overslaan');
+      return;
+    }
 
     let leden: LidRecord[];
     try {

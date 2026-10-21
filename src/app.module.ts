@@ -23,10 +23,10 @@ import { GlidernetModule } from './glidernet/glidernet.module';
         MQTT_PASSWORD: Joi.string().optional().allow(''),
 
         // Synapse
-        SYNAPSE_URL: Joi.string().required(),
-        SYNAPSE_ADMIN_USER: Joi.string().required(),
-        SYNAPSE_ADMIN_PASSWORD: Joi.string().required(),
-        SYNAPSE_DOMAIN: Joi.string().required(),
+        SYNAPSE_URL: Joi.string().optional(),
+        SYNAPSE_ADMIN_USER: Joi.string().optional(),
+        SYNAPSE_ADMIN_PASSWORD: Joi.string().optional(),
+        SYNAPSE_DOMAIN: Joi.string().optional(),
         SYNAPSE_TOKEN_FILE: Joi.string().default('./synapse-token.json'),
         SYNAPSE_ROOMS_CONFIG: Joi.string().default('./synapse-rooms.json'),
 
