@@ -29,11 +29,10 @@ export class SynapseApiService {
   }
 
   async postBinary<T>(path: string, data: Buffer, contentType: string): Promise<T> {
-    const authToken = await this.authService.getAdminToken();
     const url = `${this.baseUrl}${path}`;
     this.logger.debug(`POST (binary) ${url}`);
 
-    const response = await fetch(url, {
+    const send = async (authToken: string) => fetch(url, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${authToken}`,
@@ -41,6 +40,16 @@ export class SynapseApiService {
       },
       body: new Uint8Array(data),
     });
+
+    let authToken = await this.authService.getAdminToken();
+    let response = await send(authToken);
+
+    if (response.status === 401 && await this.isUnknownToken(response.clone())) {
+      await this.authService.handleUnauthorized(authToken);
+      this.logger.warn(`401 M_UNKNOWN_TOKEN op POST ${url}, opnieuw proberen met nieuw token`);
+      authToken = await this.authService.getAdminToken();
+      response = await send(authToken);
+    }
 
     if (!response.ok) {
       await this.handleErrorResponse(response, url);
@@ -55,11 +64,10 @@ export class SynapseApiService {
     body: unknown,
     token?: string,
   ): Promise<T> {
-    const authToken = token ?? await this.authService.getAdminToken();
     const url = `${this.baseUrl}${path}`;
     this.logger.debug(`${method} ${url}`);
 
-    const response = await fetch(url, {
+    const send = async (authToken: string) => fetch(url, {
       method,
       headers: {
         'Authorization': `Bearer ${authToken}`,
@@ -68,13 +76,22 @@ export class SynapseApiService {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
 
+    let authToken = token ?? await this.authService.getAdminToken();
+    let response = await send(authToken);
+
+    // Admin token afgewezen: opnieuw inloggen en één keer opnieuw proberen
+    if (!token && response.status === 401 && await this.isUnknownToken(response.clone())) {
+      await this.authService.handleUnauthorized(authToken);
+      this.logger.warn(`401 M_UNKNOWN_TOKEN op ${method} ${url}, opnieuw proberen met nieuw token`);
+      authToken = await this.authService.getAdminToken();
+      response = await send(authToken);
+    }
+
     if (!response.ok) {
       if (response.status === 401) {
         const text = await response.text();
-        let parsed: any;
-        try { parsed = JSON.parse(text); } catch { parsed = {}; }
-        if (parsed.errcode === 'M_UNKNOWN_TOKEN') {
-          await this.authService.handleUnauthorized();
+        if (!token && this.parseErrcode(text) === 'M_UNKNOWN_TOKEN') {
+          await this.authService.handleUnauthorized(authToken);
         }
         throw new Error(`Synapse API 401 on ${method} ${url}: ${text}`);
       }
@@ -93,6 +110,14 @@ export class SynapseApiService {
     }
 
     return response.json() as Promise<T>;
+  }
+
+  private async isUnknownToken(response: Response): Promise<boolean> {
+    return this.parseErrcode(await response.text()) === 'M_UNKNOWN_TOKEN';
+  }
+
+  private parseErrcode(text: string): string | undefined {
+    try { return JSON.parse(text)?.errcode; } catch { return undefined; }
   }
 
   private async handleErrorResponse(response: Response, url: string): Promise<never> {

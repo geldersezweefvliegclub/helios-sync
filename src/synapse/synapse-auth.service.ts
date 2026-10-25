@@ -7,9 +7,27 @@ import { StoredToken, SynapseTokenResponse } from './synapse.types';
 export class SynapseAuthService {
   private readonly logger = new Logger(SynapseAuthService.name);
 
+  // Lopende refresh/login van het admin token. Gelijktijdige aanroepen wachten hierop,
+  // want Synapse maakt het vorige token ongeldig bij elke refresh.
+  private pendingAdminToken: Promise<string> | null = null;
+
   constructor(private readonly configService: ConfigService) {}
 
   async getAdminToken(): Promise<string> {
+    const stored = this.loadStoredToken();
+    if (stored && Date.now() < stored.expires_at) {
+      return stored.access_token;
+    }
+
+    if (!this.pendingAdminToken) {
+      this.pendingAdminToken = this.renewAdminToken().finally(() => {
+        this.pendingAdminToken = null;
+      });
+    }
+    return this.pendingAdminToken;
+  }
+
+  private async renewAdminToken(): Promise<string> {
     const stored = this.loadStoredToken();
 
     if (stored) {
@@ -36,7 +54,14 @@ export class SynapseAuthService {
     return this.login(username, password);
   }
 
-  async handleUnauthorized(): Promise<void> {
+  async handleUnauthorized(rejectedToken: string): Promise<void> {
+    // Alleen verwijderen als het afgewezen token nog het opgeslagen token is;
+    // een andere aanroep kan het inmiddels al vernieuwd hebben.
+    const stored = this.loadStoredToken();
+    if (stored && stored.access_token !== rejectedToken) {
+      this.logger.debug('Received 401 M_UNKNOWN_TOKEN for an outdated token, stored token already renewed');
+      return;
+    }
     this.logger.warn('Received 401 M_UNKNOWN_TOKEN, deleting stored token');
     this.deleteToken();
   }

@@ -39,6 +39,10 @@ const MAPPING_ROL_NAAR_KAMER: Record<string, string> = {
 export class SynapseWorker {
   private readonly logger = new Logger(SynapseWorker.name);
 
+  // Lopende sync per lid (INLOGNAAM), zodat gelijktijdige events voor hetzelfde lid
+  // (bv. dubbele login vanaf mobiel) na elkaar verwerkt worden
+  private readonly syncPerLid = new Map<string, Promise<void>>();
+
   constructor(
     private readonly api: SynapseApiService,
     private readonly authService: SynapseAuthService,
@@ -63,6 +67,22 @@ export class SynapseWorker {
       this.logger.warn('SYNAPSE_URL is niet geconfigureerd, overslaan');
       return;
     }
+
+    const key = lid.INLOGNAAM?.toLowerCase() ?? `id:${lid.ID}`;
+    const vorige = this.syncPerLid.get(key) ?? Promise.resolve();
+    const huidige = vorige.then(() => this.verwerkSyncEvent(lid));
+    this.syncPerLid.set(key, huidige);
+
+    try {
+      await huidige;
+    } finally {
+      if (this.syncPerLid.get(key) === huidige) {
+        this.syncPerLid.delete(key);
+      }
+    }
+  }
+
+  private async verwerkSyncEvent(lid: LidRecord): Promise<void> {
     try {
       await this.syncLid(lid);
     } catch (err) {
