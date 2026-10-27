@@ -51,6 +51,13 @@ export class SynapseApiService {
       response = await send(authToken);
     }
 
+    // Ook het opgeslagen token afgewezen: geforceerd opnieuw inloggen
+    if (response.status === 401 && await this.isUnknownToken(response.clone())) {
+      this.logger.warn(`401 M_UNKNOWN_TOKEN op POST ${url} na retry, geforceerd opnieuw inloggen`);
+      authToken = await this.authService.forceNewAdminToken(authToken);
+      response = await send(authToken);
+    }
+
     if (!response.ok) {
       await this.handleErrorResponse(response, url);
     }
@@ -85,6 +92,13 @@ export class SynapseApiService {
       this.logger.warn(`401 M_UNKNOWN_TOKEN op ${method} ${url}, opnieuw proberen met nieuw token`);
       authToken = await this.authService.getAdminToken();
       response = await send(authToken);
+
+      // Ook het opgeslagen token afgewezen: geforceerd opnieuw inloggen
+      if (response.status === 401 && await this.isUnknownToken(response.clone())) {
+        this.logger.warn(`401 M_UNKNOWN_TOKEN op ${method} ${url} na retry, geforceerd opnieuw inloggen`);
+        authToken = await this.authService.forceNewAdminToken(authToken);
+        response = await send(authToken);
+      }
     }
 
     if (!response.ok) {

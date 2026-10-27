@@ -7,6 +7,7 @@ export interface SynapseTokenResponse {
 
 export interface StoredToken extends SynapseTokenResponse {
   expires_at: number;
+  renewed_at?: number;
 }
 
 export interface SynapseUser {

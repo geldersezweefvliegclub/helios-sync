@@ -50,6 +50,26 @@ export class SynapseAuthService {
     return this.login();
   }
 
+  // Forceer een nieuwe login, ook als er een (ogenschijnlijk geldig) token opgeslagen is.
+  // Gebruikt als ook het opgeslagen token door Synapse afgewezen wordt.
+  async forceNewAdminToken(rejectedToken: string): Promise<string> {
+    if (this.pendingAdminToken) {
+      return this.pendingAdminToken;
+    }
+    // Een andere aanroep heeft het token na deze afwijzing al vernieuwd
+    const stored = this.loadStoredToken();
+    if (stored && stored.access_token !== rejectedToken && stored.renewed_at && stored.renewed_at > Date.now() - 5_000) {
+      return stored.access_token;
+    }
+
+    this.logger.warn('Opgeslagen admin token afgewezen, opnieuw inloggen');
+    this.deleteToken();
+    this.pendingAdminToken = this.login().finally(() => {
+      this.pendingAdminToken = null;
+    });
+    return this.pendingAdminToken;
+  }
+
   async getUserToken(username: string, password: string): Promise<string> {
     return this.login(username, password);
   }
@@ -98,7 +118,8 @@ export class SynapseAuthService {
       // Persist admin token
       const stored: StoredToken = {
         ...data,
-        expires_at: Date.now() + 5 * 60 * 1000,
+        expires_at: this.berekenExpiresAt(data),
+        renewed_at: Date.now(),
       };
       this.saveToken(stored);
     }
@@ -124,12 +145,17 @@ export class SynapseAuthService {
     const data = await response.json() as SynapseTokenResponse;
     const stored: StoredToken = {
       ...data,
-      expires_at: data.expires_in_ms
-        ? Date.now() + data.expires_in_ms - 10_000
-        : Date.now() + 5 * 60 * 1000,
+      expires_at: this.berekenExpiresAt(data),
+      renewed_at: Date.now(),
     };
     this.saveToken(stored);
     return stored.access_token;
+  }
+
+  // Houd 10 seconden marge aan, zodat een token niet verloopt terwijl een request onderweg is
+  private berekenExpiresAt(data: SynapseTokenResponse): number {
+    const lifetime = data.expires_in_ms ?? 5 * 60 * 1000;
+    return Date.now() + lifetime - 10_000;
   }
 
   private loadStoredToken(): StoredToken | null {
