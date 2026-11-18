@@ -2,6 +2,5 @@ node_modules
 dist
 .env
 *.json.bak
-synapse-token.json
 google-sa.json
 data/

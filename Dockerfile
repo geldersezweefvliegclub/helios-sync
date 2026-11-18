@@ -22,8 +22,6 @@ RUN npm ci --omit=dev
 COPY --from=builder /usr/src/app/dist ./dist
 
 # Default env var paths (overridden by docker-compose environment section)
-ENV SYNAPSE_ROOMS_CONFIG=/usr/src/app/synapse-rooms.json
-ENV SYNAPSE_TOKEN_FILE=/data/synapse-token.json
 ENV GOOGLE_CREDENTIALS_PATH=/data/google-sa.json
 
 CMD ["node", "dist/main.js"]

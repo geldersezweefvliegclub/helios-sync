@@ -5,7 +5,6 @@ export const MQTT_LEDEN       = 'mqtt.leden';
 export const MQTT_VLIEGTUIGEN = 'mqtt.vliegtuigen';
 export const MQTT_DAGINFO     = 'mqtt.daginfo';
 export const MQTT_AANWEZIG    = 'mqtt.aanwezig_vliegtuig';
-export const MQTT_SYNC        = 'mqtt.sync';
 
 export class HeliosMqttEvent {
   constructor(
@@ -16,8 +15,3 @@ export class HeliosMqttEvent {
   ) {}
 }
 
-
-export class SyncMqttEvent {
-  public readonly type: HeliosMqttType;
-  public readonly data: import('../helios/helios.leden').LidRecord;
-}

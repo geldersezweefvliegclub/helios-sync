@@ -1,7 +1,7 @@
 {
   "name": "helios-sync",
   "version": "1.0.0",
-  "description": "MQTT-driven sync service: Helios → Matrix Synapse",
+  "description": "MQTT-driven sync service: Helios → Google Workspace, e-Boekhouden en Glidernet",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

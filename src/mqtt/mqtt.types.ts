@@ -14,7 +14,7 @@ export type HeliosMqttType =
 export interface RawMqttMessage {
    type: HeliosMqttType;
    table: string;
-   data: RawHeliosMqttData | RawSyncMqttData;
+   data: RawHeliosMqttData;
    timestamp: string;
 }
 
@@ -23,11 +23,4 @@ export interface RawHeliosMqttData {
    data?: Record<string, unknown>;
    resultaat?: Record<string, unknown>[];
    record_id?: number;
-}
-
-export interface RawSyncMqttData {
-  type: string;
-  table: string;
-  data: string;
-  timestamp: string;
 }

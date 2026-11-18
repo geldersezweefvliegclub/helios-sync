@@ -12,7 +12,6 @@ dist/
 # Runtime secrets
 /google-sa.json
 /google-sa-helios-sync.json
-/synapse-token.json
 /helios.account.json
 /data/
 

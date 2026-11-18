@@ -11,7 +11,6 @@ import {TOEVOEGEN, AANPASSEN, VERWIJDERD, HERSTEL, ELIMINEER} from '../mqtt/mqtt
 import {LoginService} from '../helios/apiservice/login.service';
 import {LedenService} from '../helios/apiservice/leden.service';
 
-// Draait standaard tegelijk met de Synapse bulk sync; Google vervangt Synapse
 const CRON_EXPRESSION = process.env.CRON_GOOGLE_BULKSYNC || '5 3 * * *';
 const CRON_TIMEZONE   = process.env.CRON_TIMEZONE || 'Europe/Amsterdam';
 

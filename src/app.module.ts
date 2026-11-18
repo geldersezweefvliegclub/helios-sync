@@ -5,7 +5,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import * as Joi from 'joi';
 import { GoogleModule } from './google/google.module';
 import { MqttModule } from './mqtt/mqtt.module';
-import { SynapseModule } from './synapse/synapse.module';
 import { EboekhoudenModule } from './e-boekhouden/eboekhouden.module';
 import { GlidernetModule } from './glidernet/glidernet.module';
 
@@ -21,14 +20,6 @@ import { GlidernetModule } from './glidernet/glidernet.module';
         MQTT_TOPIC: Joi.string().default('helios/sync'),
         MQTT_USERNAME: Joi.string().optional().allow(''),
         MQTT_PASSWORD: Joi.string().optional().allow(''),
-
-        // Synapse
-        SYNAPSE_URL: Joi.string().optional(),
-        SYNAPSE_ADMIN_USER: Joi.string().optional(),
-        SYNAPSE_ADMIN_PASSWORD: Joi.string().optional(),
-        SYNAPSE_DOMAIN: Joi.string().optional(),
-        SYNAPSE_TOKEN_FILE: Joi.string().default('./synapse-token.json'),
-        SYNAPSE_ROOMS_CONFIG: Joi.string().default('./synapse-rooms.json'),
 
         // Helios API
         HELIOS_CREDENTIAL_FILE: Joi.string().optional(),
@@ -53,7 +44,6 @@ import { GlidernetModule } from './glidernet/glidernet.module';
 
         // Cron schedules
         CRON_EB_BULKSYNC: Joi.string().optional(),
-        CRON_SYNAPSE_BULKSYNC: Joi.string().optional(),
         CRON_GOOGLE_BULKSYNC: Joi.string().optional(),
         GOOGLE_MAX_WEES_ACCOUNTS: Joi.number().integer().min(0).optional(),
         CRON_GLIDERNET_BULKSYNC: Joi.string().optional(),
@@ -66,7 +56,6 @@ import { GlidernetModule } from './glidernet/glidernet.module';
       }),
     }),
     GoogleModule,
-    SynapseModule,
     MqttModule,
     EboekhoudenModule,
     GlidernetModule,

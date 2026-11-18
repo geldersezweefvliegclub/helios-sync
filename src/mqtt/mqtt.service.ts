@@ -2,9 +2,8 @@ import { Injectable, Logger, OnApplicationBootstrap, OnApplicationShutdown } fro
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as mqtt from 'mqtt';
-import { RawMqttMessage, RawSyncMqttData } from './mqtt.types';
-import { MQTT_LEDEN, MQTT_STARTLIJST, MQTT_AANWEZIG, MQTT_DAGINFO, MQTT_VLIEGTUIGEN, MQTT_SYNC, HeliosMqttEvent } from './mqtt.events';
-import { LidRecord } from '../helios/helios.leden';
+import { RawHeliosMqttData, RawMqttMessage } from './mqtt.types';
+import { MQTT_LEDEN, MQTT_STARTLIJST, MQTT_AANWEZIG, MQTT_DAGINFO, MQTT_VLIEGTUIGEN, HeliosMqttEvent } from './mqtt.events';
 
 @Injectable()
 export class MqttService implements OnApplicationBootstrap, OnApplicationShutdown {
@@ -61,7 +60,6 @@ export class MqttService implements OnApplicationBootstrap, OnApplicationShutdow
   {
     switch (topic) {
       case "gezc/helios" : this.handleHeliosMessage(topic, payload); break;
-      case "gezc/sync":  this.handleSyncMessage(topic, payload); break;
       default:
         this.logger.debug(`No handler for topic: ${topic}`);
     }
@@ -76,7 +74,7 @@ export class MqttService implements OnApplicationBootstrap, OnApplicationShutdow
       return;
     }
 
-    const data = raw.data as import('./mqtt.types').RawHeliosMqttData;
+    const data = raw.data;
     this.logger.verbose(`MQTT: ${raw.type} on ${raw.table} (id: ${data.record_id})`);
 
     const event = new HeliosMqttEvent(
@@ -95,19 +93,5 @@ export class MqttService implements OnApplicationBootstrap, OnApplicationShutdow
       default:
         this.logger.debug(`No handler for table: ${raw.table}`);
     }
-  }
-
-  private handleSyncMessage(topic: string,payload: Buffer): void {
-    let raw: RawSyncMqttData;
-    try {
-      raw = JSON.parse(payload.toString());
-    } catch {
-      this.logger.error(`Invalid JSON on ${topic}: ${payload.toString()}`);
-      return;
-    }
-
-    const lid = JSON.parse(raw.data) as LidRecord;
-    this.logger.log(`MQTT sync: ${lid.NAAM} (ID=${lid.ID})`);
-    this.eventEmitter.emit(MQTT_SYNC, lid);
   }
 }
