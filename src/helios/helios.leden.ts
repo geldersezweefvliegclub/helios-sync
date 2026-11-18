@@ -6,6 +6,7 @@ export interface LidRecord {
   ACHTERNAAM?: string;
   INLOGNAAM: string;
   EMAIL?: string;
+  GMAIL?: string;       // gebruikersnaam van het Google Workspace account (deel vóór de @)
   LIDTYPE_ID: number;
   STATUSTYPE_ID?: number;
   VERWIJDERD: boolean;

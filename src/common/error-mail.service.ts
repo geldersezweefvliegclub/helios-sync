@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleService } from '../google/google.service';
+import { GoogleMailService } from '../google/google.mail.service';
 
 @Injectable()
 export class ErrorMailService {
   private readonly logger = new Logger(ErrorMailService.name);
 
   constructor(
-    private readonly googleService: GoogleService,
+    private readonly googleMailService: GoogleMailService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -22,7 +22,7 @@ export class ErrorMailService {
     const html = this.buildErrorHtml(subject, this.nl2br(errorMessage));
 
     try {
-      await this.googleService.sendHtmlEmail({
+      await this.googleMailService.sendHtmlEmail({
         to: ictEmail,
         subject: `[helios-sync] ${subject}`,
         html,

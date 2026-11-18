@@ -1,35 +1,30 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { gmail_v1, google } from 'googleapis';
-import { JWT } from 'google-auth-library';
-import * as fs from 'node:fs';
+import { GoogleServiceAccount, laadGoogleCredentials, maakGoogleAuthClient } from './google.credentials';
 
+/**
+ * Verstuurt e-mail via de Gmail API, namens GOOGLE_ADMIN_EMAIL.
+ *
+ * Vereist dat het service account domain-wide delegation heeft voor de scope
+ * https://www.googleapis.com/auth/gmail.send.
+ */
 @Injectable()
-export class GoogleService {
-  private readonly logger = new Logger(GoogleService.name);
-  private readonly credentials: any;
+export class GoogleMailService {
+  private readonly logger = new Logger(GoogleMailService.name);
+  private readonly credentials: GoogleServiceAccount | undefined = laadGoogleCredentials();
 
-  constructor() {
-    const path = process.env.GOOGLE_CREDENTIALS_PATH;
-    this.credentials = path && fs.existsSync(path)
-      ? JSON.parse(fs.readFileSync(path, { encoding: 'utf8' }))
-      : undefined;
-  }
-
+  /** Gmail client die namens GOOGLE_ADMIN_EMAIL mag versturen */
   private async getGmailApi(): Promise<gmail_v1.Gmail> {
-    if (!this.credentials) {
-      throw new Error('Google credentials not found');
-    }
-
-    const authClient = new JWT({
-      email: this.credentials.client_email,
-      key: this.credentials.private_key,
-      scopes: ['https://www.googleapis.com/auth/gmail.send'],
-      subject: process.env.GOOGLE_ADMIN_EMAIL,
-    });
+    const authClient = maakGoogleAuthClient(
+      this.credentials,
+      ['https://www.googleapis.com/auth/gmail.send'],
+      process.env.GOOGLE_ADMIN_EMAIL,
+    );
 
     return google.gmail({ version: 'v1', auth: authClient });
   }
 
+  /** De Gmail API verwacht het bericht als base64url (RFC 4648 §5) zonder padding */
   private base64UrlEncode(str: string): string {
     return Buffer.from(str)
       .toString('base64')
@@ -38,6 +33,10 @@ export class GoogleService {
       .replace(/=+$/, '');
   }
 
+  /**
+   * Verstuurt een HTML e-mail. Met VERZENDEN_EMAIL=false wordt alleen gelogd wat er
+   * verstuurd zou worden (handig voor test / ontwikkeling).
+   */
   async sendHtmlEmail({
     to,
     subject,
@@ -67,6 +66,7 @@ export class GoogleService {
     headers.push('MIME-Version: 1.0');
     headers.push('Content-Type: text/html; charset=UTF-8');
 
+    // Ruw RFC 2822 bericht: headers, lege regel, body
     const raw = this.base64UrlEncode(`${headers.join('\n')}\n\n${html}`);
 
     await gmail.users.messages.send({

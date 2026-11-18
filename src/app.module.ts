@@ -37,6 +37,11 @@ import { GlidernetModule } from './glidernet/glidernet.module';
         GOOGLE_CREDENTIALS_PATH: Joi.string().required(),
         GOOGLE_ADMIN_EMAIL: Joi.string().email().required(),
 
+        // Google Workspace accounts (leeg GOOGLE_DOMAIN = uitgeschakeld)
+        GOOGLE_DOMAIN: Joi.string().optional().allow(''),
+        GOOGLE_DIRECTORY_ADMIN: Joi.string().email().optional().allow(''),
+        GOOGLE_ORG_UNIT: Joi.string().optional().allow(''),
+
         // Error notifications
         ICT_EMAIL: Joi.string().email().default('ict@gezc.org'),
         VERZENDEN_EMAIL: Joi.string().optional().allow(''),
@@ -49,6 +54,8 @@ import { GlidernetModule } from './glidernet/glidernet.module';
         // Cron schedules
         CRON_EB_BULKSYNC: Joi.string().optional(),
         CRON_SYNAPSE_BULKSYNC: Joi.string().optional(),
+        CRON_GOOGLE_BULKSYNC: Joi.string().optional(),
+        GOOGLE_MAX_WEES_ACCOUNTS: Joi.number().integer().min(0).optional(),
         CRON_GLIDERNET_BULKSYNC: Joi.string().optional(),
         CRON_TIMEZONE: Joi.string().optional(),
 
